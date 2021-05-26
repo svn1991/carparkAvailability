@@ -2,3 +2,16 @@
     height: 97vh;
     width: 99vw; 
 }
+
+.icon-available {
+    z-index: 1000!important;
+}
+.icon-filling-up {
+    z-index: 999!important;
+}
+.icon-close-to-full {
+    z-index: 998!important;
+}
+.icon-unavailable {
+    z-index: 997!important;
+}

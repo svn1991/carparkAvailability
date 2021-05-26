@@ -1,29 +1,120 @@
+const currentLocationIcon = L.icon({
+    iconUrl: "images/location.png",
+    iconSize: [45, 50],
+    iconAnchor: [25, 60],
+});
+
+const availableLotsIcon = L.icon({
+    iconUrl: "images/available.png",
+    iconSize: [35, 35],
+    iconAnchor: [25, 20],
+    className: 'icon-available',
+});
+
+const fillingUpLotsIcon = L.icon({
+    iconUrl: "images/fillingUp.png",
+    iconSize: [30, 30],
+    iconAnchor: [25, 20],
+    className: 'icon-filling-up',
+});
+
+const closeToFullLotsIcon = L.icon({
+    iconUrl: "images/closeToFull.png",
+    iconSize: [25, 25],
+    iconAnchor: [25, 20],
+    className: 'icon-close-to-full',
+});
+
+const unavailableLotsIcon = L.icon({
+    iconUrl: "images/unavailableLocation.png",
+    iconSize: [25, 25],
+    iconAnchor: [25, 20],
+    className: 'icon-unavailable',
+});
+
+let searchLocation;
+
 let map = L.map('map');
 map.setView([1.3598, 103.8107], 12);
 map.setMaxBounds(map.getBounds());
 map.setMinZoom(12);
-// L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-//     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-//     maxZoom: 18,
-//     id: 'mapbox/streets-v11',
-//     tileSize: 512,
-//     zoomOffset: -1,
-//     accessToken: 'pk.eyJ1Ijoic3ZuMTk5MSIsImEiOiJja3AweWJ0ZWUxNzI3MnZxd3QxcDE5aW04In0.z57VRWDFDrTnL6LVF8UT8Q'
-// }).addTo(map);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-L.Control.geocoder({
+const geocoder = L.Control.geocoder({
     geocoder: L.Control.Geocoder.nominatim({
         geocodingQueryParams: {countrycodes: 'SG'}
-    })
+    }),
+    defaultMarkGeocode: false,
 }).addTo(map);
 
-window.addEventListener("DOMContentLoaded", async function () {
-    const carparks = await getHDBCarParksInfo();
-    carparks.forEach(carpark => {
-        L.marker([carpark.x_coord, carpark.y_coord]).addTo(map).bindPopup(carpark.address);
+geocoder.on('markgeocode', function(e) {
+    if (searchLocation) {
+        map.removeLayer(searchLocation);
+    }
+    const latlng = e.geocode.center;
+    searchLocation = L.marker(latlng,{icon: currentLocationIcon}).addTo(map);
+    map.fitBounds(e.geocode.bbox);
+  })
+  .addTo(map);
+
+const createCarparkMarker = (carparkNumber) => {
+    const {x_coord, y_coord, address} = carparksInfo[carparkNumber];
+    const marker = L.marker([x_coord, y_coord], {icon: getAvailabilityStatusIcon(carparkNumber)}).addTo(map).bindPopup(address + '  '+ carparkNumber);
+    carparksInfo[carparkNumber].mapMarker = marker;
+}
+
+const refreshCarparkMarker = (carparkNumber) => {
+    map.removeLayer(carparksInfo[carparkNumber].mapMarker);
+    createCarparkMarker(carparkNumber);
+}
+
+const getAvailabilityStatusIcon = (carparkNumber) => {
+    let carpark = carparksInfo[carparkNumber];
+    const lots_available = Math.floor(carpark.lots_available/carpark.lots_total*100);
+    if (carpark.lots_available === 0) {
+        return unavailableLotsIcon;
+    } else if (lots_available < 30 || carpark.lots_available <= 10) {
+        return closeToFullLotsIcon;
+    } else if (lots_available < 70) {
+        return fillingUpLotsIcon;
+    } else {
+        return availableLotsIcon;
+    }
+}
+
+const refreshAndUpdateAvailabilityMarkers = async () => {
+    const carparkLots = await getCarParksAvailabilityResponse();
+    carparkLots.forEach(({carpark_number, carpark_info, update_datetime}) => {
+        carpark_info.forEach(({lots_available, lot_type}) => {
+            if (lot_type === "C") {
+                if (carparksInfo[carpark_number]) {
+                    const updated_lots_available = parseInt(lots_available);
+                    // carparksInfo['AM14'].lots_available = 0;
+                    if (carparksInfo[carpark_number].lots_available !== updated_lots_available) {
+                        console.log('Update car park lots available: '+ carpark_number);
+                        carparksInfo[carpark_number].lots_available = parseInt(lots_available);
+                        // carparksInfo['AM14'].lots_available = 0;
+                        refreshCarparkMarker(carpark_number);
+
+                    }
+                    carparksInfo[carpark_number].lots_last_updated = update_datetime;
+                }
+            }
+        });
     });
+}
+
+window.addEventListener("DOMContentLoaded", async function () {
+    await getHDBCarParksInfo();
+    await initializeHDBCarParksAvailability();
+    carparksList.forEach(carparkNumber => {
+        createCarparkMarker(carparkNumber);
+    });
+    setInterval(() => {
+        console.log('Parking Lots info refreshed at: '+ availabilityLastRetrieved);
+        refreshAndUpdateAvailabilityMarkers();
+    }, 60000);
 });
