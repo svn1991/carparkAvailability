@@ -24,6 +24,6 @@ L.Control.geocoder({
 window.addEventListener("DOMContentLoaded", async function () {
     const carparks = await getHDBCarParksInfo();
     carparks.forEach(carpark => {
-        L.marker([carpark.x_coord, carpark.y_coord]).addTo(map).bindPopup("I am a green leaf.");
+        L.marker([carpark.x_coord, carpark.y_coord]).addTo(map).bindPopup(carpark.address);
     });
 });

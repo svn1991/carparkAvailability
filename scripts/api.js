@@ -15,10 +15,11 @@
 // }));
 
 const convertSVY21ToWGS84 = (x,y) => {
-    import proj4 from 'proj4'
+    //import proj4 from 'proj4'
     proj4.defs("EPSG:3414","+proj=tmerc +lat_0=1.366666666666667 +lon_0=103.8333333333333 +k=1 +x_0=28001.642 +y_0=38744.572 +ellps=WGS84 +units=m +no_defs");
-    var coords = proj4("EPSG:3414").inverse([43387.0213,40582.6686]);
-    console.log(coords)
+    let coords = proj4("EPSG:3414").inverse([x,y]);
+    console.log(coords);
+    return coords;
 }
 
 const getHDBCarParksInfo = async () => {
@@ -27,8 +28,10 @@ const getHDBCarParksInfo = async () => {
         .catch(err => {
             throw Error('getHDBCarParksInfo: `${err.message}`');
         });
+    carparks = carparks.slice(0, 10);
     carparks.map(carpark => {
-        const {lat,lon} = computeLatLon(carpark.x_coord, carpark.y_coord);
+        const [lon, lat] = convertSVY21ToWGS84(carpark.x_coord, carpark.y_coord);
+       // const {lat,lon} = computeLatLon(carpark.x_coord, carpark.y_coord);
         carpark.x_coord = lat;
         carpark.y_coord = lon;
     });
