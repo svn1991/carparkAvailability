@@ -43,6 +43,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
+let markerClusters = L.markerClusterGroup();
+map.addLayer(markerClusters);
+
 const geocoder = L.Control.geocoder({
     geocoder: L.Control.Geocoder.nominatim({
         geocodingQueryParams: {countrycodes: 'SG'}
@@ -62,12 +65,14 @@ geocoder.on('markgeocode', function(e) {
 
 const createCarparkMarker = (carparkNumber) => {
     const {x_coord, y_coord, address} = carparksInfo[carparkNumber];
-    const marker = L.marker([x_coord, y_coord], {icon: getAvailabilityStatusIcon(carparkNumber)}).addTo(map).bindPopup(address + '  '+ carparkNumber);
+    const marker = L.marker([x_coord, y_coord], {icon: getAvailabilityStatusIcon(carparkNumber)}).bindPopup(address + '  '+ carparkNumber); //.addTo(map)
     carparksInfo[carparkNumber].mapMarker = marker;
+    markerClusters.addLayer(carparksInfo[carparkNumber].mapMarker);
 }
 
 const refreshCarparkMarker = (carparkNumber) => {
-    map.removeLayer(carparksInfo[carparkNumber].mapMarker);
+    // map.removeLayer(carparksInfo[carparkNumber].mapMarker);
+    markerClusters.removeLayer(carparksInfo[carparkNumber].mapMarker);
     createCarparkMarker(carparkNumber);
 }
 

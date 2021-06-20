@@ -1,0 +1,2 @@
+// Marker clustering: There are three parks in a certain location like clementi so there is a cluster of 3 in green there
+
