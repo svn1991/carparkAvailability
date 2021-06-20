@@ -123,3 +123,12 @@ window.addEventListener("DOMContentLoaded", async function () {
         refreshAndUpdateAvailabilityMarkers();
     }, 60000);
 });
+
+$('#tab-toggle').click(() => {
+    $('#myTabContent').slideToggle();
+    $('#tab-toggle svg').toggleClass('fa-rotate-180');
+});
+
+
+
+

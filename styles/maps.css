@@ -1,17 +1,33 @@
 #map { 
-    height: 97vh;
-    width: 99vw; 
+    height: 100vh;
+    width: 100vw; 
+}
+
+#filter-map {
+    position: absolute;
+    bottom: 0;
+    z-index: 1000;
+    width: 380px;
+}
+
+#carpark-filter-buttons {
+    background-color: white;
+    padding: 30px;;
+}
+
+label {
+    margin: 5px 3px;
 }
 
 .icon-available {
-    z-index: 1000!important;
-}
-.icon-filling-up {
     z-index: 999!important;
 }
-.icon-close-to-full {
+.icon-filling-up {
     z-index: 998!important;
 }
-.icon-unavailable {
+.icon-close-to-full {
     z-index: 997!important;
+}
+.icon-unavailable {
+    z-index: 996!important;
 }
